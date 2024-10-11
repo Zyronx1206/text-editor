@@ -1,0 +1,65 @@
+Imports System.Diagnostics 'Tambahkan ini di bagian atas file
+
+Public Class Form1
+    Private Sub Form1_Load(ByVal sender As Object, ByVal e As EventArgs) Handles MyBase.Load
+        ' Load drives saat form di-load
+        For Each drive As System.IO.DriveInfo In System.IO.DriveInfo.GetDrives()
+            Dim node As New TreeNode(drive.Name)
+            node.Tag = drive.Name
+            node.Nodes.Add("...")
+            TreeView1.Nodes.Add(node)
+        Next
+    End Sub
+
+    Private Sub TreeView1_BeforeExpand(ByVal sender As Object, ByVal e As TreeViewCancelEventArgs) Handles TreeView1.BeforeExpand
+        ' Saat node di-expand, tambahkan sub-folder
+        Dim node As TreeNode = e.Node
+        node.Nodes.Clear()
+
+        Try
+            Dim dirInfo As New System.IO.DirectoryInfo(node.Tag.ToString())
+
+            For Each directory As System.IO.DirectoryInfo In dirInfo.GetDirectories()
+                Dim newNode As New TreeNode(directory.Name)
+                newNode.Tag = directory.FullName
+                newNode.Nodes.Add("...")
+                node.Nodes.Add(newNode)
+            Next
+        Catch ex As Exception
+            MessageBox.Show("Error loading directories: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub TreeView1_AfterSelect(ByVal sender As Object, ByVal e As TreeViewEventArgs) Handles TreeView1.AfterSelect
+        ' Saat folder dipilih, tampilkan file di ListBox
+        Dim node As TreeNode = e.Node
+        ListBox1.Items.Clear()
+
+        Try
+            Dim dirInfo As New System.IO.DirectoryInfo(node.Tag.ToString())
+
+            For Each file As System.IO.FileInfo In dirInfo.GetFiles()
+                ListBox1.Items.Add(file.FullName) ' Menggunakan FullName untuk path lengkap
+            Next
+        Catch ex As Exception
+            MessageBox.Show("Error loading files: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub ListBox1_DoubleClick(ByVal sender As Object, ByVal e As EventArgs) Handles ListBox1.DoubleClick
+        ' Membuka file saat di-double click
+        If ListBox1.SelectedItem IsNot Nothing Then
+            Dim selectedFile As String = ListBox1.SelectedItem.ToString()
+            Try
+                Process.Start(selectedFile) ' Membuka file dengan aplikasi default
+            Catch ex As Exception
+                MessageBox.Show("Error opening file: " & ex.Message)
+            End Try
+        End If
+    End Sub
+
+    Private Sub Button1_Click(ByVal sender As Object, ByVal e As EventArgs) Handles Button1.Click
+        ' Button untuk keluar dari aplikasi
+        Me.Close()
+    End Sub
+End Class
